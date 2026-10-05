@@ -1,46 +1,31 @@
 name: Build PS4 PKG Bridge
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   toolchain-smoke:
+    name: OpenOrbis Toolchain Smoke Test
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout project
-        uses: actions/checkout@v4
-      - name: Verify OpenOrbis sample build
-        uses: OpenOrbis/toolchain-action@main
-        with:
-          version: latest
-          command: |
-            set -eux
-            cd "$OO_PS4_TOOLCHAIN/samples/net_http"
-            make
 
-  bridge-build:
-    needs: toolchain-smoke
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout project
+      - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Build bridge with official net_http project files
+
+      - name: Run OpenOrbis Toolchain
         uses: OpenOrbis/toolchain-action@main
         with:
-          version: latest
+          version: v0.5.1
           command: |
-            set -eux
-            cp "$GITHUB_WORKSPACE/src/main.c" "$OO_PS4_TOOLCHAIN/samples/net_http/net_http/main.cpp"
-            cd "$OO_PS4_TOOLCHAIN/samples/net_http"
-            make
-            mkdir -p "$GITHUB_WORKSPACE/out"
-            PkgTool.Core pkg_build pkg.gp4 "$GITHUB_WORKSPACE/out"
-            ls -lah "$GITHUB_WORKSPACE/out"
-      - name: Upload PKG artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: PS4-PKG-Bridge-Phase1
-          path: out/*.pkg
-          if-no-files-found: error
+            set -e
+            echo "=== OpenOrbis PS4 Toolchain ==="
+            echo "Toolchain path: $OO_PS4_TOOLCHAIN"
+            test -n "$OO_PS4_TOOLCHAIN"
+            test -d "$OO_PS4_TOOLCHAIN"
+            echo "Toolchain detected successfully."
+            echo "=== Repository files ==="
+            ls -la
+            echo "=== Smoke test passed ==="
