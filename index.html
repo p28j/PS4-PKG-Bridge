@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PS4 PKG Bridge — Benchmark</title>
+<style>
+:root{--bg:#0b0908;--panel:#15100e;--brown:#2C221E;--brown2:#3D2C24;--gold:#C5A059;--muted:#9c8d82;--ok:#7fbf8a;--bad:#d77f7f}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0b0908,#130e0c);color:#f3eee9;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1100px;margin:auto;padding:44px}.card{background:rgba(21,16,14,.96);border:1px solid #2a201b;border-radius:18px;padding:24px;box-shadow:0 20px 60px #0008}.top{display:flex;justify-content:space-between;align-items:center;gap:20px}.brand{font-size:28px;font-weight:800}.badge{padding:8px 14px;border-radius:999px;background:var(--brown2);color:var(--gold)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.stat{padding:20px;background:#110d0b;border:1px solid #2a201b;border-radius:14px}.label{font-size:13px;color:var(--muted)}.value{font-size:30px;font-weight:800;margin-top:7px}.bar{height:18px;background:#0d0a09;border-radius:999px;overflow:hidden;margin:15px 0}.fill{height:100%;width:0;background:linear-gradient(90deg,#705637,var(--gold));transition:width .15s}.pass{color:var(--ok)}.fail{color:var(--bad)}.log{height:220px;overflow:auto;background:#090706;border-radius:12px;padding:15px;font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap}.hint{color:var(--muted);line-height:1.7}.btn{display:inline-block;margin-top:12px;padding:12px 18px;border-radius:11px;background:var(--gold);color:#17110e;border:0;font-weight:800;text-decoration:none;cursor:pointer}
+input[type=file]{display:none}.file{display:inline-block;margin-top:12px;padding:12px 18px;border-radius:11px;background:var(--brown2);color:#fff;cursor:pointer}
+@media(max-width:760px){main{padding:18px}.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body><main>
+<section class="card">
+<div class="top"><div><div class="brand">PS4 PKG Bridge</div><div class="hint">Phase 1 — Network Benchmark</div></div><div id="status" class="badge">Connecting…</div></div>
+<div class="grid">
+<div class="stat"><div class="label">Current speed</div><div class="value" id="speed">0.00 MB/s</div></div>
+<div class="stat"><div class="label">Average speed</div><div class="value" id="avg">0.00 MB/s</div></div>
+<div class="stat"><div class="label">Received</div><div class="value" id="bytes">0 B</div></div>
+<div class="stat"><div class="label">30 MB/s requirement</div><div class="value" id="result">NOT TESTED</div></div>
+</div>
+<div class="bar"><div id="fill" class="fill"></div></div>
+<p class="hint">From the phone, select a large test file and upload it to <b>/api/upload</b>. The PS4 writes the stream directly to disk and reports the measured throughput.</p>
+<label class="file">Choose test file<input id="file" type="file"></label>
+<button id="send" class="btn">Start upload benchmark</button>
+<h3>Log</h3><div id="log" class="log"></div>
+</section></main>
+<script>
+const $=id=>document.getElementById(id); const log=m=>{$('log').textContent+=m+'\n';$('log').scrollTop=$('log').scrollHeight};
+const fmt=n=>{if(n<1024)return n+' B';if(n<1024**2)return (n/1024).toFixed(1)+' KB';if(n<1024**3)return (n/1024**2).toFixed(1)+' MB';return (n/1024**3).toFixed(2)+' GB'};
+async function poll(){try{const s=await fetch('/api/state',{cache:'no-store'}).then(r=>r.json());$('status').textContent=s.uploading?'UPLOADING':'READY';$('speed').textContent=s.speed_mbps.toFixed(2)+' MB/s';$('avg').textContent=s.avg_mbps.toFixed(2)+' MB/s';$('bytes').textContent=fmt(s.bytes);$('result').textContent=s.pass_30mbps?'PASS':'NOT TESTED';$('result').className='value '+(s.pass_30mbps?'pass':'');}catch(e){$('status').textContent='OFFLINE'}setTimeout(poll,700)}
+$('send').onclick=async()=>{const f=$('file').files[0];if(!f){log('Choose a test file first.');return}log('Uploading '+f.name+' ('+fmt(f.size)+')');try{const r=await fetch('/api/upload',{method:'POST',headers:{'Content-Length':String(f.size)},body:f});const j=await r.json();log(JSON.stringify(j));}catch(e){log('Upload error: '+e)}};poll();
+</script></body></html>

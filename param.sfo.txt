@@ -1,0 +1,6 @@
+TITLE=PS4 PKG Bridge
+TITLE_ID=BRDG00001
+VERSION=01.00
+CATEGORY=gd
+
+This is a metadata template. Generate the binary param.sfo using your OpenOrbis/LibOrbisPkg tooling.
